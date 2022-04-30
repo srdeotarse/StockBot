@@ -128,7 +128,7 @@ y_test= y_test*scale_factor
 
 
 #the project graph
-st.subheader('Predictions vs Orginals')
+st.subheader('Predictiosns vs Orginals')
 
 fig2=plt.figure(figsize=(12,6))
 ax = plt.axes()
