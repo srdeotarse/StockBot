@@ -1,0 +1,10 @@
+matplotlib
+mplfinance
+plotly
+cufflinks
+pandas_datareader
+yfinance
+scipy
+keras
+tensorflow
+scikit-learn
