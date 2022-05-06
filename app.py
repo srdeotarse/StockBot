@@ -226,7 +226,7 @@ class trendlineSeeker:
         slope = 0
         intercept = 0
         while len(tempdf) > 2:
-            slope, intercept, r_value, p_value, std_err = sp.stats.linregress(x=tempdf['row number'], y=tempdf.loc[:, ("AAPL", "close")])
+            slope, intercept, r_value, p_value, std_err = sp.stats.linregress(x=tempdf['row number'], y=tempdf.loc[:, (TICKER, "close")])
             if flag == 'upper':
               tempdf = tempdf.loc[(tempdf.loc[:, (symbol, "close")] > slope * tempdf['row number'] + intercept)]
             if flag == 'lower':
