@@ -205,8 +205,8 @@ class trendlineSeeker:
         else:
             self.flag = [flag]
         self.data = data
-        self.previousTrendlineBreakingPoint = None
-        self.currentTrendlineBreakingPoint = None  
+        self.previousTrendlineBreakingPoint = 0
+        self.currentTrendlineBreakingPoint = len(self.data) + 1
         self.refinedTrendlines = {}
     def getCurrentSymbol(self):
         for symbol in self.symbols:
