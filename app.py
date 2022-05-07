@@ -34,13 +34,14 @@ TICKER = st.text_input('Enter Stock Ticker', 'AAPL')
 
 st.subheader("Details of Chart Pattern Analysis")
 
-CHANNEL_VALIDATION_WINDOW = st.number_input("Enter Channel Validation Window", 0, 10000, 48)
+CHANNEL_VALIDATION_FRAME = st.number_input("Enter Channel Validation Window", 0, 10000, 48)
 
-CHANNEL_BREAKING_THRESHOLD = st.number_input("Enter Channel Breaking Threshold in percentage", 0, 100, 10)
+CHANNEL_INTERCEPTING_THRESHOLD = st.number_input("Enter Channel Intercepting Threshold in percentage", 0, 100, 10)
 
 SLOPE_DIFF_THRESHOLD = st.number_input("Enter Slope difference between trendlines of channel in degree", 0, 90, 8)
 
-# Display Stock OHLC Data
+DEVIATION_THRESHOLD = st.number_input("Enter Deviation Threshold in percentage", 0, 100, 15)
+
 df = data.DataReader(TICKER, 'yahoo', START_DATE, END_DATE)
 st.subheader(f'Data of {TICKER} stock')
 st.write(df)
@@ -201,38 +202,38 @@ def get_data(symbol, start, end):
   return df
 
 # Class to identify trendlines in stock chart
-class trendlineSeeker:  
+class trendlineDetector:  
     def __init__(self, symbols, data, flag='all'):
         self.symbols = symbols
         self.start = START_DATE
         self.end = END_DATE
-        self.validationWindowUpper = CHANNEL_VALIDATION_WINDOW
-        self.validationWindowLower = CHANNEL_VALIDATION_WINDOW
-        self.distortionThresholdUpper = 0.15
-        self.distortionThresholdLower = 0.15
+        self.upperValidationWindow = CHANNEL_VALIDATION_FRAME
+        self.validationWindowLower = CHANNEL_VALIDATION_FRAME
+        self.upperDeviationThreshold = DEVIATION_THRESHOLD/100
+        self.lowerDeviationThreshold = DEVIATION_THRESHOLD/100
   
         if flag == 'all':
             self.flag = ['upper', 'lower']
         else:
             self.flag = [flag]
         self.data = data
-        self.previousTrendlineBreakingPoint = 0
-        self.currentTrendlineBreakingPoint = len(self.data) + 1
+        self.previousTrendlineInterceptingPoint = 0
+        self.currentTrendlineInterceptingPoint = len(self.data) + 1
         self.refinedTrendlines = {}
     def getCurrentSymbol(self):
         for symbol in self.symbols:
             yield symbol
     def getCurrentRange(self):
-        df = self.data.copy().loc[(self.data['row number'] >= self.previousTrendlineBreakingPoint) & (self.data['row number'] < self.currentTrendlineBreakingPoint), :]
+        df = self.data.copy().loc[(self.data['row number'] >= self.previousTrendlineInterceptingPoint) & (self.data['row number'] < self.currentTrendlineInterceptingPoint), :]
         return df
-    def trendlineBreakingPoints(self, symbol, flag, currentdf, slope, intercept):
+    def trendlineInterceptingPoints(self, symbol, flag, currentdf, slope, intercept):
         if flag == 'upper':
-           distortionThreshold = self.distortionThresholdUpper
+           distortionThreshold = self.upperDeviationThreshold
         if flag == 'lower':
-           distortionThreshold = self.distortionThresholdLower
-        possibleTrendBreakingPoints = currentdf.loc[(currentdf.loc[:, (symbol, "close")] < (1-distortionThreshold)*(slope*currentdf['row number'] + intercept)) | (currentdf.loc[:, (symbol, "close")] > (1+distortionThreshold)*(slope*currentdf['row number'] + intercept)), 'row number']
-        return possibleTrendBreakingPoints
-    def trendlineForCurrentRange(self, symbol, flag, currentdf):
+           distortionThreshold = self.lowerDeviationThreshold
+        possibleTrendInterceptingPoints = currentdf.loc[(currentdf.loc[:, (symbol, "close")] < (1-distortionThreshold)*(slope*currentdf['row number'] + intercept)) | (currentdf.loc[:, (symbol, "close")] > (1+distortionThreshold)*(slope*currentdf['row number'] + intercept)), 'row number']
+        return possibleTrendInterceptingPoints
+    def currentRangeTrendlines(self, symbol, flag, currentdf):
         tempdf = currentdf.copy()
         slope = 0
         intercept = 0
@@ -243,25 +244,25 @@ class trendlineSeeker:
             if flag == 'lower':
               tempdf = tempdf.loc[(tempdf.loc[:, (symbol, "close")]< slope * tempdf['row number'] + intercept)]
         return slope, intercept
-    def refineTrendlineForCurrentRange(self, symbol, flag, possibleTrendlineBreakingPoints):
+    def refineCurrentRangeTrendlines(self, symbol, flag, possibleTrendlineInterceptingPoints):
         if flag == 'upper':
-           validationWindow = self.validationWindowUpper
+           validationWindow = self.upperValidationWindow
         if flag == 'lower':
            validationWindow = self.validationWindowLower
-        localPossibleTrendlineBreakingPoints = possibleTrendlineBreakingPoints
+        localPossibleTrendlineInterceptingPoints = possibleTrendlineInterceptingPoints
         i = 1
-        while len(localPossibleTrendlineBreakingPoints) > 0:
-            self.currentTrendlineBreakingPoint = int(localPossibleTrendlineBreakingPoints[0])
-            if self.currentTrendlineBreakingPoint - self.previousTrendlineBreakingPoint < validationWindow:
-                self.currentTrendlineBreakingPoint = len(self.data) + 1 - i
+        while len(localPossibleTrendlineInterceptingPoints) > 0:
+            self.currentTrendlineInterceptingPoint = int(localPossibleTrendlineInterceptingPoints[0])
+            if self.currentTrendlineInterceptingPoint - self.previousTrendlineInterceptingPoint < validationWindow:
+                self.currentTrendlineInterceptingPoint = len(self.data) + 1 - i
                 i += 1
             currentdf = self.getCurrentRange()
-            slope, intercept = self.trendlineForCurrentRange(symbol, flag, currentdf)
-            localPossibleTrendlineBreakingPoints = self.trendlineBreakingPoints(symbol, flag, currentdf, slope, intercept)
-        self.refinedTrendlines[symbol][flag][str(self.previousTrendlineBreakingPoint)] = {'slope': slope, 'intercept': intercept,'starting row': self.previousTrendlineBreakingPoint, 'ending row': self.currentTrendlineBreakingPoint - 1}
-        self.previousTrendlineBreakingPoint = self.currentTrendlineBreakingPoint
-        self.currentTrendlineBreakingPoint = len(self.data) + 1
-    def vizTrend(self):
+            slope, intercept = self.currentRangeTrendlines(symbol, flag, currentdf)
+            localPossibleTrendlineInterceptingPoints = self.trendlineInterceptingPoints(symbol, flag, currentdf, slope, intercept)
+        self.refinedTrendlines[symbol][flag][str(self.previousTrendlineInterceptingPoint)] = {'slope': slope, 'intercept': intercept,'starting row': self.previousTrendlineInterceptingPoint, 'ending row': self.currentTrendlineInterceptingPoint - 1}
+        self.previousTrendlineInterceptingPoint = self.currentTrendlineInterceptingPoint
+        self.currentTrendlineInterceptingPoint = len(self.data) + 1
+    def graphTrend(self):
         fig, axs = plt.subplots(len(self.symbols))
         pltCount = 0
         for symbol, values in self.refinedTrendlines.items():
@@ -274,41 +275,34 @@ class trendlineSeeker:
         chart = plt.show()
         st.pyplot(chart)
 
-    def runTrendlineSeeker(self, viz=True):
-        # self.get_data()
-        for symbol in self.symbols:
-            # print("symbol -", symbol)            
+    def runTrendlineDetector(self, graph=True):
+        for symbol in self.symbols:           
             self.refinedTrendlines[symbol] = {}
-            # print("refinedTrendlines[symbol] -", self.refinedTrendlines[symbol])
             for flag in self.flag:
                 self.refinedTrendlines[symbol][flag] = {}
-                # print("refinedTrendlines[symbol][flag] -", self.refinedTrendlines[symbol][flag])
                 while True:
                     currentRange = self.getCurrentRange()
-                    # print("currentRange -", currentRange)
                     if len(currentRange) <= 2: break
-                    trendline = self.trendlineForCurrentRange(symbol, flag, currentRange)
-                    # print("trendline -", trendline)
-                    possibleTrendlineBreakingPoints = self.trendlineBreakingPoints(symbol, flag, currentRange, *trendline)
-                    # print("possibleTrendlineBreakingPoints -", possibleTrendlineBreakingPoints)
-                    if len(possibleTrendlineBreakingPoints) == 0:
-                       self.refinedTrendlines[symbol][flag][str(self.previousTrendlineBreakingPoint)] = {'slope': trendline[0], 'intercept': trendline[1], 'starting row': self.previousTrendlineBreakingPoint, 'ending row': self.currentTrendlineBreakingPoint - 1}
+                    trendline = self.currentRangeTrendlines(symbol, flag, currentRange)
+                    possibleTrendlineInterceptingPoints = self.trendlineInterceptingPoints(symbol, flag, currentRange, *trendline)
+                    if len(possibleTrendlineInterceptingPoints) == 0:
+                       self.refinedTrendlines[symbol][flag][str(self.previousTrendlineInterceptingPoint)] = {'slope': trendline[0], 'intercept': trendline[1], 'starting row': self.previousTrendlineInterceptingPoint, 'ending row': self.currentTrendlineInterceptingPoint - 1}
                        break
                     else:
-                        self.refineTrendlineForCurrentRange(symbol, flag, possibleTrendlineBreakingPoints)
-                self.previousTrendlineBreakingPoint = 0
-                self.currentTrendlineBreakingPoint = len(self.data) + 1
-        if viz: self.vizTrend()
+                        self.refineCurrentRangeTrendlines(symbol, flag, possibleTrendlineInterceptingPoints)
+                self.previousTrendlineInterceptingPoint = 0
+                self.currentTrendlineInterceptingPoint = len(self.data) + 1
+        if graph: self.graphTrend()
     
-class channelSeeker(trendlineSeeker):
+class channelDetector(trendlineDetector):
     def __init__(self, symbols, data):
         super().__init__(symbols, data, flag='all')
-        self.channelValidationWindow = CHANNEL_VALIDATION_WINDOW
+        self.channelValidationFrame = CHANNEL_VALIDATION_FRAME
         self.slopeDiffThreshold = SLOPE_DIFF_THRESHOLD*math.pi/180
-        self.channelBreakingThreshold = CHANNEL_BREAKING_THRESHOLD/100
+        self.channelInterceptingThreshold = CHANNEL_INTERCEPTING_THRESHOLD/100
         self.channels = {}
-    def runChannelSeeker(self, viz=False):
-        self.runTrendlineSeeker(viz=False)
+    def runChannelDetector(self, graph=False):
+        self.runTrendlineDetector(graph=False)
         trendlines = self.refinedTrendlines
         for symbol in self.symbols:
             self.channels[symbol] = {}
@@ -321,8 +315,8 @@ class channelSeeker(trendlineSeeker):
                     if (np.abs(uSlope-lSlope) < self.slopeDiffThreshold) and (uIntercept-lIntercept > 0) and range(max(uStart, lStart), min(uEnd, lEnd)+1):
                        start = np.min((uStart, lStart))
                        end = np.max((uEnd, lEnd))
-                       upperViolation = self.channelBreakingPoints(symbol, uSlope, uIntercept, start, end, self.channelBreakingThreshold, flag='upper')
-                       lowerViolation = self.channelBreakingPoints(symbol, lSlope, lIntercept, start, end, self.channelBreakingThreshold, flag='lower')
+                       upperViolation = self.channelInterceptingPoints(symbol, uSlope, uIntercept, start, end, self.channelInterceptingThreshold, flag='upper')
+                       lowerViolation = self.channelInterceptingPoints(symbol, lSlope, lIntercept, start, end, self.channelInterceptingThreshold, flag='lower')
                        if upperViolation.any() or lowerViolation.any():
                            continue
                        else:
@@ -336,17 +330,15 @@ class channelSeeker(trendlineSeeker):
                            self.channels[symbol][channelId]['interceptLower'] = lIntercept
                     else:
                         continue
-        if viz == True:
-            # print(self.channels)
-            self.vizChannel()
-    def channelBreakingPoints(self, symbol, slope, intercept, start, end, tolerance, flag):
+        if graph == True:
+            self.graphChannel()
+    def channelInterceptingPoints(self, symbol, slope, intercept, start, end, tolerance, flag):
         if flag == 'upper':
             violationCondition = self.data.loc[:, (symbol,'close')].iloc[start:end] > (1 + tolerance)*(slope*self.data['row number'].iloc[start:end]+1.0*intercept)
         if flag == 'lower':
             violationCondition = self.data.loc[:, (symbol,'close')].iloc[start:end] < (1 - tolerance)*(slope*self.data['row number'].iloc[start:end]+1.0*intercept)
-        # print(self.data.loc[:, (symbol, 'close')].iloc[start:end]-(1 - tolerance)*(slope*self.data['row number'].iloc[start:end]+1.0*intercept))
         return self.data.iloc[start:end].loc[violationCondition, 'row number']
-    def vizChannel(self):
+    def graphChannel(self):
         fig, axs = plt.subplots(len(self.symbols))
         pltCount = 0
         for symbol, values in self.channels.items():
@@ -364,9 +356,9 @@ self.data.index.values[channelProperties['start']:channelProperties['end']],chan
 if __name__ == '__main__':
     data = get_data(TICKER, START_DATE, END_DATE)
     st.subheader('Stock Chart Trendlines')
-    ts = trendlineSeeker([TICKER], data, flag='all')
-    ts.runTrendlineSeeker(viz = True)
+    ts = trendlineDetector([TICKER], data, flag='all')
+    ts.runTrendlineDetector(graph = True)
     st.subheader('Detected Channel Patterns')
-    cs = channelSeeker([TICKER], data)
-    cs.runChannelSeeker(viz=True)
+    cs = channelDetector([TICKER], data)
+    cs.runChannelDetector(graph=True)
 st.set_option('deprecation.showPyplotGlobalUse', False)
