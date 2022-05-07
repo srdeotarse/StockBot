@@ -33,14 +33,13 @@ RES_SUP_DATE = st.date_input(
 TICKER = st.text_input('Enter Stock Ticker', 'AAPL')
 
 st.subheader("Details of Chart Pattern Analysis")
-
+st.caption("Enter Slope difference between trendlines of channel in degree")
 CHANNEL_VALIDATION_FRAME = st.number_input("Enter Channel Validation Window", 0, 10000, 48)
-
+st.caption("Enter Slope difference between trendlines of channel in degree")
 CHANNEL_INTERCEPTING_THRESHOLD = st.number_input("Enter Channel Intercepting Threshold in percentage", 0, 100, 10)
-st.text("Enter Slope difference between trendlines of channel in degree")
-st.text("A pair of support and resistance is considered parallel if their slope difference is less than the threshold.")
-SLOPE_DIFF_THRESHOLD = st.number_input("", 0, 90, 8)
-
+st.caption("Enter Slope difference between trendlines of channel in degree")
+SLOPE_DIFF_THRESHOLD = st.number_input("A pair of support and resistance is considered parallel if their slope difference is less than the threshold.", 0, 90, 8)
+st.caption("Enter Slope difference between trendlines of channel in degree")
 DEVIATION_THRESHOLD = st.number_input("Enter Deviation Threshold in percentage", 0, 100, 15)
 
 df = data.DataReader(TICKER, 'yahoo', START_DATE, END_DATE)
