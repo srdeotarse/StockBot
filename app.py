@@ -16,7 +16,7 @@ from sklearn.preprocessing import MinMaxScaler
 
 
 # Website Title
-st.title('StockBot - Stock Chart Analyzer')
+st.title('StockBot - Chart Pattern Analyzer')
 
 st.subheader("Details of Stock")
 
