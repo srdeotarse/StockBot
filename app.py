@@ -18,7 +18,7 @@ from sklearn.preprocessing import MinMaxScaler
 # Website Title
 st.title('StockBot - Chart Pattern Analyzer')
 
-st.subheader("Details of Stock")
+st.header("Details of Stock")
 
 # User Inputs
 START_DATE = st.date_input(
@@ -32,36 +32,36 @@ RES_SUP_DATE = st.date_input(
 )
 TICKER = st.text_input('Enter Stock Ticker', 'AAPL')
 
-st.subheader("Details of Chart Pattern Analysis")
-st.caption("Enter Slope difference between trendlines of channel in degree")
+st.header("Details of Chart Pattern Analysis")
+st.subheader("Enter Channel Validation Window")
 CHANNEL_VALIDATION_FRAME = st.number_input("Enter Channel Validation Window", 0, 10000, 48)
-st.caption("Enter Slope difference between trendlines of channel in degree")
+st.subheader("Enter Channel Intercepting Threshold in percentage")
 CHANNEL_INTERCEPTING_THRESHOLD = st.number_input("Enter Channel Intercepting Threshold in percentage", 0, 100, 10)
-st.caption("Enter Slope difference between trendlines of channel in degree")
+st.subheader("Enter Slope difference between trendlines of channel in degree)
 SLOPE_DIFF_THRESHOLD = st.number_input("A pair of support and resistance is considered parallel if their slope difference is less than the threshold.", 0, 90, 8)
-st.caption("Enter Slope difference between trendlines of channel in degree")
+st.subheader("Enter Deviation Threshold in percentage")
 DEVIATION_THRESHOLD = st.number_input("Enter Deviation Threshold in percentage", 0, 100, 15)
 
 df = data.DataReader(TICKER, 'yahoo', START_DATE, END_DATE)
-st.subheader(f'Data of {TICKER} stock')
+st.header(f'Data of {TICKER} stock')
 st.write(df)
 
-st.subheader("Analysis of different types of stock charts")
+st.header("Analysis of different types of stock charts")
 
 # Interactive Candlestick Chart
-st.subheader('Candlestick Chart')
+st.header('Candlestick Chart')
 fig = go.Figure(data = go.Candlestick(x=df.index, open=df['Open'], high=df['High'], low=df['Low'], close=df['Close']))
 st.plotly_chart(fig)
 
 # Closing Price vs Time Chart
-st.subheader('Closing Price vs Time Chart')
+st.header('Closing Price vs Time Chart')
 fig = plt.figure(figsize=(12,6))
 ax = plt.axes()
 ax.set_facecolor('white')
 plt.plot(df.Close,'b')
 st.pyplot(fig)
 
-st.subheader('Closing Price vs Time Chart with 100MA')
+st.header('Closing Price vs Time Chart with 100MA')
 ma100=df.Close.rolling(100).mean()
 fig = plt.figure(figsize=(12,6))
 ax = plt.axes()
@@ -70,7 +70,7 @@ plt.plot(ma100,'red')
 plt.plot(df.Close,'blue')
 st.pyplot(fig)
 
-st.subheader('Closing Price vs time chart with 100MA and 200MA')
+st.header('Closing Price vs time chart with 100MA and 200MA')
 ma100=df.Close.rolling(100).mean()
 ma200=df.Close.rolling(200).mean()
 fig = plt.figure(figsize=(12,6))
@@ -114,7 +114,7 @@ y_predicted = y_predicted*scale_factor
 y_test= y_test*scale_factor
 
 # Predicted Price vs Original Price Graph
-st.subheader('Predicted Price vs Original Price')
+st.header('Predicted Price vs Original Price')
 
 fig2=plt.figure(figsize=(12,6))
 ax = plt.axes()
@@ -128,7 +128,7 @@ ax.set_facecolor('white')
 st.pyplot(fig2)
 
 # Resistance and Support Levels
-st.subheader('Resistance and Support Levels')
+st.header('Resistance and Support Levels')
 
 # get stock prices using yfinance library
 def get_stock_price(symbol):   
@@ -189,7 +189,7 @@ ax.set_facecolor("white")
 st.pyplot(fig4)
 
 # Channel Pattern Analysis
-st.subheader('Channel Pattern Analysis')
+st.header('Channel Pattern Analysis')
 
 # Get stock prices using yfinance library
 def get_data(symbol, start, end):
@@ -355,10 +355,10 @@ self.data.index.values[channelProperties['start']:channelProperties['end']],chan
 
 if __name__ == '__main__':
     data = get_data(TICKER, START_DATE, END_DATE)
-    st.subheader('Stock Chart Trendlines')
+    st.header('Stock Chart Trendlines')
     ts = trendlineDetector([TICKER], data, flag='all')
     ts.runTrendlineDetector(graph = True)
-    st.subheader('Detected Channel Patterns')
+    st.header('Detected Channel Patterns')
     cs = channelDetector([TICKER], data)
     cs.runChannelDetector(graph=True)
 st.set_option('deprecation.showPyplotGlobalUse', False)
