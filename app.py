@@ -37,8 +37,8 @@ st.subheader("Details of Chart Pattern Analysis")
 CHANNEL_VALIDATION_FRAME = st.number_input("Enter Channel Validation Window", 0, 10000, 48)
 
 CHANNEL_INTERCEPTING_THRESHOLD = st.number_input("Enter Channel Intercepting Threshold in percentage", 0, 100, 10)
-st.text_area("Enter Slope difference between trendlines of channel in degree")
-st.text_area("A pair of support and resistance is considered parallel if their slope difference is less than the threshold.")
+st.text("Enter Slope difference between trendlines of channel in degree")
+st.text("A pair of support and resistance is considered parallel if their slope difference is less than the threshold.")
 SLOPE_DIFF_THRESHOLD = st.number_input("", 0, 90, 8)
 
 DEVIATION_THRESHOLD = st.number_input("Enter Deviation Threshold in percentage", 0, 100, 15)
