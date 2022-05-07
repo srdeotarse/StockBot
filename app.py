@@ -18,6 +18,8 @@ from sklearn.preprocessing import MinMaxScaler
 # Website Title
 st.title('StockBot - Stock Chart Analyzer')
 
+st.subheader("Details of Stock")
+
 # User Inputs
 START_DATE = st.date_input(
      "Enter Start Date",
@@ -29,6 +31,14 @@ RES_SUP_DATE = st.date_input(
      "Enter Resistance Support Date"
 )
 TICKER = st.text_input('Enter Stock Ticker', 'AAPL')
+
+st.subheader("Details of Chart Pattern Analysis")
+
+CHANNEL_VALIDATION_WINDOW = st.number_input("Enter Channel Validation Window", 0, 10000, 48)
+
+CHANNEL_BREAKING_THRESHOLD = st.number_input("Enter Channel Breaking Threshold in percentage", 0, 100, 10)
+
+SLOPE_DIFF_THRESHOLD = st.number_input("Enter Slope difference between trendlines of channel in degree", 0, 90, 8)
 
 # Display Stock OHLC Data
 df = data.DataReader(TICKER, 'yahoo', START_DATE, END_DATE)
@@ -196,8 +206,8 @@ class trendlineSeeker:
         self.symbols = symbols
         self.start = START_DATE
         self.end = END_DATE
-        self.validationWindowUpper = 48
-        self.validationWindowLower = 48
+        self.validationWindowUpper = CHANNEL_VALIDATION_WINDOW
+        self.validationWindowLower = CHANNEL_VALIDATION_WINDOW
         self.distortionThresholdUpper = 0.15
         self.distortionThresholdLower = 0.15
   
@@ -293,9 +303,9 @@ class trendlineSeeker:
 class channelSeeker(trendlineSeeker):
     def __init__(self, symbols, data):
         super().__init__(symbols, data, flag='all')
-        self.channelValidationWindow = 48
-        self.slopeDiffThreshold = 8*math.pi/180
-        self.channelBreakingThreshold = 0.1
+        self.channelValidationWindow = CHANNEL_VALIDATION_WINDOW
+        self.slopeDiffThreshold = SLOPE_DIFF_THRESHOLD*math.pi/180
+        self.channelBreakingThreshold = CHANNEL_BREAKING_THRESHOLD/100
         self.channels = {}
     def runChannelSeeker(self, viz=False):
         self.runTrendlineSeeker(viz=False)
